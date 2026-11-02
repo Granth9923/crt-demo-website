@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LearnWise – AI Personalized Learning Assistant (Prototype)</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1c2333;--muted:#5d6678;--line:#e1e5ee;--acc:#2f5597;--accbg:#e8eefb;--ok:#2e8b57;--warn:#c98a00;--bad:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151d;--card:#1b2030;--text:#e8ebf3;--muted:#9aa3b8;--line:#2b3247;--acc:#8fb0ee;--accbg:#232c45;--ok:#5fcf93;--warn:#f0b940;--bad:#ff7b6b}}
+:root[data-theme="dark"]{--bg:#12151d;--card:#1b2030;--text:#e8ebf3;--muted:#9aa3b8;--line:#2b3247;--acc:#8fb0ee;--accbg:#232c45;--ok:#5fcf93;--warn:#f0b940;--bad:#ff7b6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+h1{font-size:1.25rem;margin:0}h2{font-size:1.05rem;margin:0 0 8px}
+.sub{color:var(--muted);font-size:.85rem;margin:2px 0 0}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}
+nav button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;font-size:.9rem}
+nav button.on{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:.9rem;margin:10px 0 4px}
+.tag{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:999px;background:var(--accbg);color:var(--acc)}
+.tag.bad{background:transparent;border:1px solid var(--bad);color:var(--bad)}.tag.ok{background:transparent;border:1px solid var(--ok);color:var(--ok)}
+.btn{border:1px solid var(--acc);background:var(--acc);color:var(--bg);padding:7px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:.9rem}
+.btn.ghost{background:transparent;color:var(--acc)}.btn.red{background:transparent;border-color:var(--bad);color:var(--bad)}
+select{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font:inherit}
+.opt:hover{border-color:var(--acc)}
+.note{font-size:.85rem;color:var(--muted)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sw:last-child{border:0}
+.sw input{width:20px;height:20px;accent-color:var(--acc)}
+.tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+.chatlog{height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg)}.msg{max-width:85%;padding:8px 12px;border-radius:12px;margin:6px 0;font-size:.92rem}.msg.user{margin-left:auto;background:var(--acc);color:var(--bg)}.msg.assistant{background:var(--card);border:1px solid var(--line)}.ci{flex:1;font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);min-width:0}
+footer{color:var(--muted);font-size:.8rem;text-align:center;padding:20px 16px 30px}
+.banner{background:var(--accbg);border-radius:10px;padding:10px 14px;font-size:.85rem;margin-bottom:14px}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding:0"><h1>🎓 LearnWise <span class="tag">Pilot prototype</span></h1>
+<p class="sub">AI-based personalized learning assistant · demo built for the Six Thinking Hats case study</p></div></header>
+<main class="wrap">
+<nav id="nav"></nav>
+<div class="banner" id="mode"></div>
+<div id="view"></div>
+</main>
+<footer>Prototype with sample data only. Chat messages are sent to the AI only when you press Send.</footer>
+<script>
+const SUG={DSA:["Visual walkthrough: trees & graphs","Practice set: 10 recursion problems"],DBMS:["Short video: normalization with examples","Practice set: SQL joins (easy → hard)"],OS:["Notes: process scheduling in plain language","Mini quiz: deadlock scenarios"],Maths:["Step-by-step: probability basics","Practice set: matrices & determinants"]};
+const QS={DSA:{q:"Which data structure uses LIFO order?",o:["Queue","Stack","Heap"],a:1},DBMS:{q:"Which normal form removes partial dependency?",o:["1NF","2NF","3NF"],a:1},OS:{q:"Which scheduling algorithm can cause starvation?",o:["Round Robin","FCFS","Priority"],a:2},Maths:{q:"If P(A)=0.3, P(not A) = ?",o:["0.3","0.7","1.3"],a:1}};
+Object.assign(SUG,{"Machine Learning":["Visual guide: how a model learns from data","Practice: train/test split exercise"],Statistics:["Step-by-step: mean, variance & distributions","Practice set: probability & hypothesis testing basics"],Python:["Short tutorial: lists, dicts & functions","Mini project: clean a small CSV with pandas"],"Critical Thinking":["Try Six Thinking Hats on a real campus problem","Worksheet: spot assumptions & biases in an argument"]});
+Object.assign(QS,{"Machine Learning":{q:"Which problem type predicts a continuous value?",o:["Classification","Regression","Clustering"],a:1},Statistics:{q:"Which measure is least affected by outliers?",o:["Mean","Median","Range"],a:1},Python:{q:"Which Python type is immutable?",o:["list","dict","tuple"],a:2},"Critical Thinking":{q:"Which Six Thinking Hat looks at risks and problems?",o:["Yellow","Black","Green"],a:1}});
+Object.assign(SUG,{"Digital Electronics":["Visual guide: logic gates & truth tables","Practice: simplify Boolean expressions with K-maps"],"Signals and Systems":["Step-by-step: convolution with simple examples","Practice: sampling & aliasing problems"],"Communication Systems":["Short video: AM vs FM modulation","Practice: bandwidth & SNR numericals"],Microprocessors:["Notes: 8085 architecture in plain language","Mini quiz: addressing modes"],Thermodynamics:["Visual guide: the four laws with everyday examples","Practice: Carnot cycle problems"],"Fluid Mechanics":["Step-by-step: Bernoulli\u2019s equation","Practice: pipe flow & pressure drop"],"Strength of Materials":["Visual guide: the stress-strain curve","Practice: bending moment & shear force diagrams"],"Machine Design":["Notes: factor of safety explained","Practice: shaft & key design problems"],"Structural Analysis":["Visual guide: beams, supports & reactions","Practice: shear force & bending moment diagrams"],Surveying:["Step-by-step: leveling & reduced levels","Practice: traverse & bearing problems"],"Concrete Technology":["Short video: mix design basics","Practice: water-cement ratio problems"],"Geotechnical Engineering":["Notes: soil classification in plain language","Practice: permeability & compaction problems"]});
+Object.assign(QS,{"Digital Electronics":{q:"Which gate gives output 1 only when both inputs are 1?",o:["OR","AND","XOR"],a:1},"Signals and Systems":{q:"To avoid aliasing, the sampling rate must be at least:",o:["Half the signal frequency","The signal frequency","Twice the highest frequency"],a:2},"Communication Systems":{q:"Which modulation varies the carrier\u2019s frequency?",o:["AM","FM","PCM"],a:1},Microprocessors:{q:"Which register holds the address of the next instruction in the 8085?",o:["Accumulator","Program Counter","Stack Pointer"],a:1},Thermodynamics:{q:"Which law defines thermal equilibrium?",o:["Zeroth law","First law","Second law"],a:0},"Fluid Mechanics":{q:"Bernoulli\u2019s equation is based on conservation of:",o:["Mass only","Energy","Momentum only"],a:1},"Strength of Materials":{q:"Stress is defined as:",o:["Force \u00d7 area","Force per unit area","Change in length"],a:1},"Machine Design":{q:"Factor of safety is the ratio of:",o:["Working stress to ultimate stress","Ultimate stress to working stress","Yield to elastic limit"],a:1},"Structural Analysis":{q:"A roller support provides how many reaction components?",o:["One","Two","Three"],a:0},Surveying:{q:"Which instrument measures horizontal and vertical angles?",o:["Dumpy level","Theodolite","Chain"],a:1},"Concrete Technology":{q:"A lower water-cement ratio generally gives concrete with:",o:["Lower strength","Higher strength","No change"],a:1},"Geotechnical Engineering":{q:"Which soil property measures how easily water flows through it?",o:["Permeability","Plasticity","Cohesion"],a:0}});
+const BR={CSE:["DSA","DBMS","OS","Maths","Critical Thinking"],AIML:["Machine Learning","Statistics","Python","DSA","Critical Thinking"],ENTC:["Digital Electronics","Signals and Systems","Communication Systems","Microprocessors","Critical Thinking"],Mechanical:["Thermodynamics","Fluid Mechanics","Strength of Materials","Machine Design","Critical Thinking"],Civil:["Structural Analysis","Surveying","Concrete Technology","Geotechnical Engineering","Critical Thinking"]};
+const mk=(n,d,v)=>({n,d,t:Object.fromEntries(BR[d].map((k,i)=>[k,v[i]]))});
+const S=[mk("Sana","CSE",[60,55,49,44,58]),mk("Aarav","CSE",[72,48,65,58,62]),mk("Rohan","CSE",[41,38,52,35,45]),
+mk("Kabir","AIML",[44,38,52,45,42]),mk("Ishaan","AIML",[80,76,74,78,70]),mk("Diya","AIML",[66,60,72,58,55]),
+mk("Vikram","ENTC",[48,39,52,45,50]),mk("Neha","ENTC",[74,66,70,62,68]),mk("Anjali","ENTC",[60,58,64,70,57]),
+mk("Rahul","Mechanical",[56,50,62,48,52]),mk("Pooja","Mechanical",[78,72,80,75,70]),mk("Arjun","Mechanical",[64,58,60,66,60]),
+mk("Omkar","Civil",[42,50,38,46,44]),mk("Tanvi","Civil",[68,74,70,66,72]),mk("Riya","Civil",[58,62,55,60,64])];
+const st={tab:"student",br:"CSE",chat:[],busy:false,cur:0,limited:false,consent:{track:true,personal:true,alerts:true},alert:{},quiz:null,fb:{CSE:[4,5,4,4,5,4],AIML:[5,4,5,5,4],ENTC:[3,4,3,4],Mechanical:[3,2,3],Civil:[2,3,3]},fbSent:false};
+const avg=s=>Math.round(Object.values(s.t).reduce((a,b)=>a+b,0)/Object.keys(s.t).length);
+const weak=s=>Object.entries(s.t).sort((a,b)=>a[1]-b[1]);
+const risk=s=>avg(s)<55||weak(s)[0][1]<40;
+const col=v=>v>=70?"var(--ok)":v>=50?"var(--warn)":"var(--bad)";
+const $=id=>document.getElementById(id);
+const tabs=[["student","Student view"],["chat","AI assistant"],["faculty","Faculty view"],["privacy","Privacy & data"],["feedback","Feedback & rollout"]];
+function nav(){$("nav").innerHTML=tabs.map(([k,l])=>`<button class="${st.tab===k?"on":""}" onclick="go('${k}')">${l}</button>`).join("")+`<select aria-label="Branch" style="margin-left:auto" onchange="br(this.value)">${Object.keys(BR).map(b=>`<option ${b===st.br?"selected":""}>${b}</option>`).join("")}</select>`}
+function br(v){st.br=v;st.cur=S.findIndex(s=>s.d===v);st.quiz=null;render()}
+function go(k){st.tab=k;render()}
+function banner(){$("mode").innerHTML=st.limited?"<b>Limited mode:</b> content suggestions and quizzes only. No tracking, no at-risk alerts.":"<b>Full mode:</b> progress tracking, personalized content and faculty alerts, with your consent and human review."}
+function student(){
+ const s=S[st.cur],sel=`<select onchange="st.cur=+this.value;st.quiz=null;render()">${S.map((x,i)=>[x,i]).filter(([x])=>x.d===st.br).map(([x,i])=>`<option value="${i}" ${i===st.cur?"selected":""}>${x.n} · ${x.d} (sample)</option>`).join("")}</select>`;
+ const tracking=st.consent.track&&!st.limited;
+ const w=weak(s);
+ const prog=tracking?Object.entries(s.t).map(([k,v])=>`<div class="row"><span>${k}</span><span>${v}%</span></div><div class="bar"><i style="width:${v}%;background:${col(v)}"></i></div>`).join(""):`<p class="note">Progress tracking is off${st.limited?" (limited mode)":""}. Turn it on in <b>Privacy &amp; data</b> to see your mastery levels.</p>`;
+ const sug=st.consent.personal?`<p class="note">Suggested for you because ${w[0][0]} is your weakest area. You decide what to study.</p>`+[...SUG[w[0][0]],...SUG[w[1][0]].slice(0,1)].map(x=>`<div class="row"><span>📘 ${x}</span><span class="tag">AI suggestion</span></div>`).join(""):`<p class="note">Personalization is off. Showing the standard syllabus list instead.</p>`;
+ const k=w[0][0],Q=QS[k];
+ const quiz=st.quiz?`<p><b>${st.quiz.ok?"Correct! ✅":"Not quite ❌"}</b> Try explaining the answer to a friend, as group learning helps understanding.</p><button class="btn ghost" onclick="st.quiz=null;render()">Next question</button>`:`<p><b>${k} check:</b> ${Q.q}</p>${Q.o.map((o,i)=>`<button class="opt" onclick="ans(${i},'${k}')">${o}</button>`).join("")}`;
+ return `<div class="card"><div class="row" style="margin:0"><h2>Hello, ${s.n} 👋</h2>${sel}</div><p class="note" style="margin:6px 0 0">Overall mastery: ${tracking?avg(s)+"%":"hidden"}</p></div>
+ <div class="grid"><div class="card"><h2>Your progress</h2>${prog}</div><div class="card"><h2>Personalized content</h2>${sug}</div></div>
+ <div class="card"><h2>Quick practice</h2>${quiz}</div>
+ <div class="card"><h2>Study balance</h2><p class="note">LearnWise suggests, you think. For deeper understanding, try an AI-free revision session or a study group for ${w[0][0]} this week.</p></div>`}
+function ans(i,k){const s=S[st.cur],ok=i===QS[k].a;s.t[k]=Math.min(100,s.t[k]+(ok?8:2));st.quiz={ok};render()}
+function faculty(){
+ if(st.limited||!st.consent.alerts)return `<div class="card"><h2>At-risk alerts are switched off</h2><p class="note">${st.limited?"The college is using Limited mode, so no individual tracking or alerts are generated.":"Alerts are disabled in Privacy & data settings."}</p></div>`;
+ const fl=S.map((s,i)=>[s,i]).filter(([s])=>s.d===st.br&&risk(s));
+ const tp=Object.keys(S.find(s=>s.d===st.br).t).map(k=>[k,Math.round(S.filter(s=>s.d===st.br).reduce((a,s)=>a+s.t[k],0)/S.filter(s=>s.d===st.br).length)]).sort((a,b)=>a[1]-b[1]);
+ const rows=fl.length?fl.map(([s,i])=>{const a=st.alert[i];const why=weak(s).filter(x=>x[1]<55).map(x=>`${x[0]} ${x[1]}%`).join(", ");
+ return `<div class="card"><div class="row" style="margin:0"><h2>${s.n}</h2>${a?`<span class="tag ${a==="confirmed"?"ok":""}">${a}</span>`:`<span class="tag bad">AI flag: needs review</span>`}</div>
+ <p class="note">Why flagged: low scores in ${why}. Overall ${avg(s)}%.</p>${a?"":`<p class="note">The AI only suggests. Please decide after speaking with the student.</p><button class="btn" onclick="dec(${i},'confirmed')">Confirm &amp; offer support</button> <button class="btn red" onclick="dec(${i},'dismissed')">Dismiss (AI is wrong)</button>`}</div>`}).join(""):`<div class="card"><p>No students currently flagged.</p></div>`;
+ return `<div class="card"><h2>Class insights · ${st.br}</h2><p class="note">Topic needing re-teaching: <b>${tp[0][0]}</b> (class average ${tp[0][1]}%).</p><div class="tbl"><table><tr><th>Topic</th><th>Class avg</th></tr>${tp.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}%</td></tr>`).join("")}</table></div></div>
+ <h2 style="margin:16px 0 8px">At-risk alerts (human in the loop)</h2>${rows}
+ <div class="card"><h2>Bias check</h2><p class="note">Audit reminder: compare flag rates across groups each month and review dismissed alerts to find mistakes in the model.</p></div>`}
+function dec(i,v){st.alert[i]=v;render()}
+function privacy(){
+ const c=st.consent,sw=(k,l,d)=>`<label class="sw"><span><b>${l}</b><br><span class="note">${d}</span></span><input type="checkbox" ${c[k]?"checked":""} onchange="st.consent['${k}']=this.checked;render()"></label>`;
+ return `<div class="card"><h2>Privacy agreement (summary)</h2><div class="tbl"><table><tr><th>Data collected</th><th>Purpose</th></tr><tr><td>Quiz scores &amp; topic mastery</td><td>Personalizing study content</td></tr><tr><td>Time spent per topic</td><td>Spotting students who need help early</td></tr><tr><td>Name &amp; department</td><td>Showing results to the right faculty</td></tr></table></div>
+ <p class="note">Data is limited to what is needed, anonymised where possible, stored on college-controlled servers, and never shared or used to train other AI tools.</p></div>
+ <div class="card"><h2>Your consent choices</h2>${sw("track","Track my progress","Show my mastery levels and keep my scores")}${sw("personal","Personalized suggestions","Let the AI recommend study content")}${sw("alerts","Share alerts with faculty","Allow faculty to be notified if I may need support")}</div>
+ <div class="card"><h2>Rollout mode</h2><p class="note">If the vendor cannot meet the privacy terms, the college can request a limited version instead of dropping the tool.</p><button class="btn ${st.limited?"":"ghost"}" onclick="st.limited=!st.limited;render()">${st.limited?"Switch to Full mode":"Switch to Limited mode"}</button></div>
+ <div class="card"><h2>Your data</h2><button class="btn red" onclick="if(confirm('Delete sample data for this student?')){const s=S[st.cur];for(const k in s.t)s.t[k]=0;st.alert={};render()}">Delete my data (demo)</button><p class="note">In the real tool, this would permanently erase the student's records.</p></div>`}
+function fbk(){
+ const D=Object.entries(st.fb).map(([d,a])=>[d,a.length,a.reduce((x,y)=>x+y,0)/a.length]).sort((a,b)=>b[2]-a[2]);
+ return `<div class="card"><h2>Student survey</h2><p class="note">Phase 1 is a survey. The tool launches first where interest is highest, and early feedback improves it before it reaches other departments.</p>
+ <select id="fd">${Object.keys(st.fb).map(d=>`<option>${d}</option>`).join("")}</select>
+ <select id="fr">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} – ${["","Not interested","Unsure","Neutral","Interested","Very interested"][n]}</option>`).join("")}</select>
+ <button class="btn" onclick="st.fb[$('fd').value].push(+$('fr').value);st.fbSent=true;render()">Submit</button>${st.fbSent?` <span class="tag ok">Thanks for your feedback!</span>`:""}</div>
+ <div class="card"><h2>Suggested rollout order</h2>${D.map(([d,n,v],i)=>`<div class="row"><span>${i+1}. ${d} <span class="note">(${n} responses)</span></span><span>${v.toFixed(1)}/5 ${i<2?`<span class="tag ok">Pilot</span>`:`<span class="tag">Later phase</span>`}</span></div><div class="bar"><i style="width:${v*20}%;background:var(--acc)"></i></div>`).join("")}
+ <p class="note">Departments with lower scores join later, with a more refined tool based on feedback from the pilot.</p></div>`}
+function render(){nav();banner();$("view").innerHTML={student,chat:chatView,faculty,privacy,feedback:fbk}[st.tab]();if(st.tab==="chat")paintChat()}
+let SMP=true;
+const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const KB={DSA:["stack","queue","tree","graph","recursion","dsa","array","sort","linked"],DBMS:["sql","join","normal","dbms","database","key","transaction"],OS:["process","deadlock","scheduling","thread","memory","semaphore"],Maths:["probability","matrix","matrices","maths","math","determinant","statistics"]};
+Object.assign(KB,{"Machine Learning":["machine learning","regression","classification","neural","overfitting","gradient"],Statistics:["statistics","variance","median","hypothesis","distribution","standard deviation"],Python:["python","pandas","numpy","dictionary"],"Critical Thinking":["critical","six hats","thinking hat","bias","assumption","argument"]});
+Object.assign(KB,{"Digital Electronics":["gate","boolean","flip-flop","k-map","logic"],"Signals and Systems":["convolution","fourier","sampling","signal"],"Communication Systems":["modulation","bandwidth","snr"],Microprocessors:["8085","8086","microprocessor","register","addressing mode"],Thermodynamics:["thermodynamic","entropy","carnot","enthalpy","heat engine"],"Fluid Mechanics":["bernoulli","fluid","viscosity","pipe flow","reynolds"],"Strength of Materials":["stress","strain","bending moment","shear force","torsion"],"Machine Design":["factor of safety","shaft","gear","fatigue"],"Structural Analysis":["beam","truss","reaction","structural","moment distribution"],Surveying:["survey","theodolite","leveling","traverse"],"Concrete Technology":["concrete","cement","mix design","slump","curing"],"Geotechnical Engineering":["soil","permeability","compaction","foundation","geotechnical"]});
+const BRIEF={"DSA": "DSA means Data Structures and Algorithms: ways to organise data (arrays, stacks, queues, trees, graphs) and step-by-step methods (searching, sorting, recursion) to work with it efficiently. A stack, for example, is last-in-first-out, like a pile of plates.", "DBMS": "A DBMS stores and manages data in an organised way, usually as tables linked by keys, and you query it with SQL. Normalization splits tables to remove repeated data and avoid update errors.", "OS": "An operating system manages the CPU, memory, storage and devices so programs can share them. It uses processes, scheduling and memory management, and must avoid problems like deadlock, where programs wait on each other forever.", "Maths": "Engineering maths covers tools like probability (how likely an event is, from 0 to 1) and matrices (grids of numbers used to solve systems of equations).", "Machine Learning": "Machine learning lets a computer learn patterns from data instead of following hand-written rules. Regression predicts a number, classification picks a category, and clustering groups similar items.", "Statistics": "Statistics summarises data and draws conclusions from it, using measures like mean, median and variance, and tools like distributions and hypothesis tests.", "Python": "Python is a beginner-friendly programming language. Lists hold ordered items, dictionaries store key-value pairs, and functions package reusable code, while libraries like NumPy and pandas handle data.", "Critical Thinking": "Critical thinking means judging information carefully: spot assumptions, check evidence and look at an issue from several sides. The Six Thinking Hats method does this by taking facts, feelings, risks, benefits, ideas and process one at a time.", "Digital Electronics": "Digital electronics works with 0s and 1s using logic gates such as AND, OR and NOT. Gates combine into circuits like adders and flip-flops, and truth tables or K-maps help design them.", "Signals and Systems": "A signal carries information over time, like sound or voltage, and a system processes it. Convolution gives a system’s output, and sampling turns a continuous signal into digital samples, at least twice the highest frequency to avoid aliasing.", "Communication Systems": "Communication systems send information from a transmitter to a receiver. Modulation places a message on a carrier wave (AM changes its amplitude, FM changes its frequency), and SNR compares signal strength to noise.", "Microprocessors": "A microprocessor is the CPU on a chip. It fetches, decodes and executes instructions using registers, an ALU and a program counter, and addressing modes tell it where to find data.", "Thermodynamics": "Thermodynamics studies heat, work and energy. The zeroth law defines temperature equality, the first law is energy conservation, and the second law says heat flows naturally from hot to cold and some energy is always wasted.", "Fluid Mechanics": "Fluid mechanics studies liquids and gases at rest and in motion. Bernoulli’s equation says that along a streamline, faster flow means lower pressure, because energy is conserved.", "Strength of Materials": "Strength of materials looks at how materials respond to loads. Stress is force per unit area, strain is the relative change in length, and the stress-strain curve shows how a material stretches and finally fails.", "Machine Design": "Machine design is about sizing parts like shafts, gears and bearings so they work safely. The factor of safety (ultimate stress divided by working stress) adds a margin against failure and fatigue.", "Structural Analysis": "Structural analysis finds the forces in beams, trusses and frames. You start with support reactions, then draw shear force and bending moment diagrams to see where the structure is most stressed.", "Surveying": "Surveying measures the positions and heights of points on land. A theodolite measures angles, a level finds height differences, and traversing links measured lines into a map.", "Concrete Technology": "Concrete is cement, water, sand and aggregate that hardens as it cures. A lower water-cement ratio gives higher strength, and mix design chooses the proportions for the strength needed.", "Geotechnical Engineering": "Geotechnical engineering studies soil and rock for foundations and earthworks. Key properties include permeability (how easily water flows), compaction and shear strength."};
+function chatView(){const s=S[st.cur];
+ return `<div class="card"><div class="row" style="margin:0"><h2>Ask LearnWise 💬</h2><span class="tag ${SMP?"ok":""}">${SMP?"Live AI":"Demo mode"}</span></div><p class="note">Ask a doubt about a topic. Ask about a topic and get a quick explanation. For graded work, the assistant gives hints and steps rather than the final answer.${SMP?"":" Live AI isn’t available here, so simple built-in answers are used."}</p>
+ <div id="log" class="chatlog" aria-live="polite"></div>
+ <div style="display:flex;gap:8px;margin-top:10px"><input id="ci" class="ci" placeholder="e.g. Explain deadlock in simple words" onkeydown="if(event.key==='Enter')send()"><button class="btn" onclick="send()">Send</button></div>
+ <p class="note" style="margin-bottom:0">Chatting as ${s.n} (${s.d}). This demo does not store your questions.</p></div>`}
+function paintChat(){const l=$("log");if(!l)return;l.innerHTML=st.chat.length?st.chat.map(m=>`<div class="msg ${m.role}">${esc(m.content).replace(/\n/g,"<br>")}</div>`).join(""):`<div class="msg assistant">Hi! I’m your study assistant. Ask me about ${Object.keys(S[st.cur].t).join(", ")}, or ask how your data is used.</div>`;l.scrollTop=l.scrollHeight}
+function localReply(q){const t=q.toLowerCase();
+ if(/privacy|data|consent|delete/.test(t))return "Only quiz scores, topic mastery, time per topic and your name and department are used. You can switch tracking, personalization and faculty alerts off in Privacy & data, and delete your data any time.";
+ for(const k in KB)if(KB[k].some(w=>t.includes(w)))return `${BRIEF[k]} For hint-based practice, try: ${SUG[k][1]}. Ask me for a worked example if you like!`;
+ return `I can help with ${Object.keys(S[st.cur].t).join(", ")}. Tell me the topic and what you’ve tried so far, and I’ll guide you step by step. Try explaining it to a classmate afterwards too!`}
+async function send(){const el=$("ci"),q=el.value.trim();if(!q||st.busy)return;el.value="";
+ const hist=st.chat.map(x=>({role:x.role,content:x.content}));
+ st.chat.push({role:"user",content:q});st.busy=true;
+ const m={role:"assistant",content:"\u2026"};st.chat.push(m);paintChat();
+ try{
+  const s=S[st.cur],weakTopics=st.consent.personal&&!st.limited?weak(s).slice(0,2).map(x=>x[0]):[];
+  const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...hist,{role:"user",content:q}],weak:weakTopics,branch:s.d})});
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  const d=await res.json();m.content=d.text||localReply(q);SMP=true;
+ }catch(e){SMP=false;m.content=localReply(q)}
+ st.busy=false;render()}
+render();
+</script>
+</body>
+</html>
