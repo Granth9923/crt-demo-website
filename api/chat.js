@@ -38,10 +38,11 @@ module.exports = async (req, res) => {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": gKey },
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-          generationConfig: { maxOutputTokens: 500 },
+          generationConfig: { maxOutputTokens: 1024 },
         }),
       });
       if (!r.ok) {
@@ -61,6 +62,7 @@ module.exports = async (req, res) => {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      signal: AbortSignal.timeout(25000),
       body: JSON.stringify({ model: process.env.CLAUDE_MODEL || "claude-haiku-5-5", max_tokens: 500, system, messages }),
     });
     if (!r.ok) {
@@ -75,6 +77,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({ text });
   } catch (e) {
     console.error(e);
+    if (e && (e.name === "TimeoutError" || e.name === "AbortError")) return res.status(504).json({ error: "AI service timed out" });
     return res.status(500).json({ error: "Server error" });
   }
 };

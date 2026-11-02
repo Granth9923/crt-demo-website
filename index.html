@@ -137,10 +137,10 @@ async function send(){const el=$("ci"),q=el.value.trim();if(!q||st.busy)return;e
  const m={role:"assistant",content:"\u2026"};st.chat.push(m);paintChat();
  try{
   const s=S[st.cur],weakTopics=st.consent.personal&&!st.limited?weak(s).slice(0,2).map(x=>x[0]):[];
-  const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...hist,{role:"user",content:q}],weak:weakTopics,branch:s.d})});
+  const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},signal:AbortSignal.timeout(30000),body:JSON.stringify({messages:[...hist,{role:"user",content:q}],weak:weakTopics,branch:s.d})});
   if(!res.ok){let c="HTTP "+res.status;try{c=(await res.json()).error||c}catch(_){}throw new Error(c)}
   const d=await res.json();m.content=d.text||localReply(q);SMP=true;
- }catch(e){SMP=false;m.content=localReply(q)+"\n\n(Demo mode: live AI unavailable \u2013 "+e.message+")"}
+ }catch(e){SMP=false;m.content=localReply(q)+"\n\n(Demo mode: live AI unavailable \u2013 "+(e.name==="TimeoutError"?"the request timed out":e.message)+")"}
  st.busy=false;render()}
 render();
 </script>
