@@ -1,10 +1,12 @@
-// Vercel serverless function: keeps your Anthropic API key on the server.
+// Vercel serverless function: keeps your AI API key on the server.
+// Uses Google Gemini (free tier) if GEMINI_API_KEY is set, otherwise Anthropic Claude if ANTHROPIC_API_KEY is set.
 const TOPICS = ["DSA","DBMS","OS","Maths","Statistics","Python","Machine Learning","Digital Electronics","Signals and Systems","Communication Systems","Microprocessors","Thermodynamics","Fluid Mechanics","Strength of Materials","Machine Design","Structural Analysis","Surveying","Concrete Technology","Geotechnical Engineering","Critical Thinking"];
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  const gKey = process.env.GEMINI_API_KEY;
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set" });
+  if (!gKey && !key) return res.status(500).json({ error: "Set GEMINI_API_KEY (free) or ANTHROPIC_API_KEY" });
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
@@ -31,12 +33,43 @@ module.exports = async (req, res) => {
       `Encourage critical thinking and group study, and keep replies under 150 words.` +
       (weak.length ? ` The student's weakest topics are ${weak.join(" and ")}.` : "");
 
+    if (gKey) {
+      const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": gKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+          generationConfig: { maxOutputTokens: 500 },
+        }),
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        console.error(t);
+        let status = "";
+        try { status = JSON.parse(t).error.status; } catch (_) {}
+        return res.status(502).json({ error: `Gemini API ${r.status}${status ? ": " + status : ""}` });
+      }
+      const data = await r.json();
+      const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+      const text = parts.map(p => p.text || "").join("").trim();
+      if (!text) return res.status(502).json({ error: "Gemini returned no text" });
+      return res.status(200).json({ text });
+    }
+
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({ model: process.env.CLAUDE_MODEL || "claude-haiku-5-5", max_tokens: 500, system, messages }),
     });
-    if (!r.ok) { console.error(await r.text()); return res.status(502).json({ error: "Upstream error" }); }
+    if (!r.ok) {
+      const t = await r.text();
+      console.error(t);
+      let type = "";
+      try { type = JSON.parse(t).error.type; } catch (_) {}
+      return res.status(502).json({ error: `Anthropic API ${r.status}${type ? ": " + type : ""}` });
+    }
     const data = await r.json();
     const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
     return res.status(200).json({ text });
