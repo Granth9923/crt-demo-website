@@ -126,7 +126,9 @@ function chatView(){const s=S[st.cur];
  <div id="log" class="chatlog" aria-live="polite"></div>
  <div style="display:flex;gap:8px;margin-top:10px"><input id="ci" class="ci" placeholder="e.g. Explain deadlock in simple words" onkeydown="if(event.key==='Enter')send()"><button class="btn" onclick="send()">Send</button></div>
  <p class="note" style="margin-bottom:0">Chatting as ${s.n} (${s.d}). This demo does not store your questions.</p></div>`}
-function paintChat(){const l=$("log");if(!l)return;l.innerHTML=st.chat.length?st.chat.map(m=>`<div class="msg ${m.role}">${esc(m.content).replace(/\n/g,"<br>")}</div>`).join(""):`<div class="msg assistant">Hi! I’m your study assistant. Ask me about ${Object.keys(S[st.cur].t).join(", ")}, or ask how your data is used.</div>`;l.scrollTop=l.scrollHeight}
+function paintChat(){const l=$("log");if(!l)return;l.innerHTML=st.chat.length?st.chat.map(m=>`<div class="msg ${m.role}">${esc(m.content).replace(/\n/g,"<br>")}</div>`).join(""):`<div class="msg assistant">Hi! I’m your study assistant. Ask me about ${Object.keys(S[st.cur].t).join(", ")}, or ask how your data is used.</div>`;
+if(window.renderMathInElement){renderMathInElement(l,{delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false},{left:"\\(",right:"\\)",display:false},{left:"\[",right:"\]",display:true}],throwOnError:false});}
+l.scrollTop=l.scrollHeight}
 function localReply(q){const t=q.toLowerCase();
  if(/privacy|data|consent|delete/.test(t))return "Only quiz scores, topic mastery, time per topic and your name and department are used. You can switch tracking, personalization and faculty alerts off in Privacy & data, and delete your data any time.";
  for(const k in KB)if(KB[k].some(w=>t.includes(w)))return `${BRIEF[k]} For hint-based practice, try: ${SUG[k][1]}. Ask me for a worked example if you like!`;
