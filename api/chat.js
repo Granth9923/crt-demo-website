@@ -30,33 +30,48 @@ module.exports = async (req, res) => {
       `You are LearnWise, a study assistant for college ${branch} students. ` +
       `Answer conceptual and simple topic questions directly with a short, clear explanation (3 to 5 sentences) and one simple example. ` +
       `For graded assignments, exams or lab submissions, give hints and steps instead of the final answer. ` +
-      `Encourage critical thinking and group study, and keep replies under 150 words.` +
+      `Encourage critical thinking and group study, and keep replies under 150 words. ` +
+      `Write any maths using LaTeX, with $...$ for inline formulas and $$...$$ for display formulas, and avoid markdown tables.` +
       (weak.length ? ` The student's weakest topics are ${weak.join(" and ")}.` : "");
 
     if (gKey) {
-      const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": gKey },
-        signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
-          generationConfig: { maxOutputTokens: 1024 },
-        }),
+      const primary = process.env.GEMINI_MODEL || "gemini-flash-latest";
+      const fallback = process.env.GEMINI_FALLBACK_MODEL || "gemini-flash-lite-latest";
+      const payload = JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: messages.map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+        generationConfig: { maxOutputTokens: 1024 },
       });
-      if (!r.ok) {
+      const errors = [];
+      // Try the main model first; if it is busy (503) or fails, try the lighter fallback model.
+      for (const model of [...new Set([primary, fallback])]) {
+        let r;
+        try {
+          r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-goog-api-key": gKey },
+            signal: AbortSignal.timeout(10000),
+            body: payload,
+          });
+        } catch (e) {
+          errors.push(`${model}: ${e && e.name === "TimeoutError" ? "timed out" : "network error"}`);
+          continue;
+        }
+        if (r.ok) {
+          const data = await r.json();
+          const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+          const text = parts.map(p => p.text || "").join("").trim();
+          if (text) return res.status(200).json({ text });
+          errors.push(`${model}: empty reply`);
+          continue;
+        }
         const t = await r.text();
-        console.error(t);
+        console.error(model, t);
         let status = "";
         try { status = JSON.parse(t).error.status; } catch (_) {}
-        return res.status(502).json({ error: `Gemini API ${r.status}${status ? ": " + status : ""}` });
+        errors.push(`${model}: ${r.status}${status ? " " + status : ""}`);
       }
-      const data = await r.json();
-      const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-      const text = parts.map(p => p.text || "").join("").trim();
-      if (!text) return res.status(502).json({ error: "Gemini returned no text" });
-      return res.status(200).json({ text });
+      return res.status(502).json({ error: `Gemini API failed (${errors.join("; ")})` });
     }
 
     const r = await fetch("https://api.anthropic.com/v1/messages", {
