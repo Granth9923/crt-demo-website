@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
 <title>LearnWise – AI Personalized Learning Assistant (Prototype)</title>
 <style>
 :root{--bg:#f0ebd8;--card:#FFFFFF;--text:#0d1321;--muted:#44546A;--line:#C4CCD8;--acc:#1d2d44;--accbg:#DCE3EC;--ok:#3e5c76;--warn:#748cab;--bad:#0d1321;--b1:#2E8B57;--b2:#E0A800;--b3:#C0392B;
@@ -11,10 +14,10 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 :root[data-theme="dark"]{--bg:#0d1321;--card:#1d2d44;--text:#f0ebd8;--muted:#A9B6C8;--line:#2C4058;--acc:#748cab;--accbg:#243650;--ok:#9FB4CC;--warn:#748cab;--bad:#f0ebd8;--b1:#5FCF93;--b2:#F0B940;--b3:#FF7B6B}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{background:var(--card);border-bottom:4px solid var(--warn);padding:14px 16px}
 .wrap{max-width:900px;margin:0 auto;padding:0 16px}
-h1{font-size:1.25rem;margin:0}h2{font-size:1.05rem;margin:0 0 8px}
+h1,h2,nav button,.btn{font-family:"Plus Jakarta Sans",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}h1{font-size:1.25rem;font-weight:800;margin:0}h2{font-size:1.05rem;font-weight:700;margin:0 0 8px}nav button{font-weight:600}
 .sub{color:var(--muted);font-size:.85rem;margin:2px 0 0}
 nav{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}
 nav button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;font-size:.9rem}
