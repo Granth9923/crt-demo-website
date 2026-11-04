@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LearnWise – AI Personalized Learning Assistant (Prototype)</title>
 <style>
-:root{--bg:#f6f7fb;--card:#fff;--text:#1c2333;--muted:#5d6678;--line:#e1e5ee;--acc:#2f5597;--accbg:#e8eefb;--ok:#2e8b57;--warn:#c98a00;--bad:#c0392b;
+:root{--bg:#f0ebd8;--card:#FFFFFF;--text:#0d1321;--muted:#44546A;--line:#C4CCD8;--acc:#1d2d44;--accbg:#DCE3EC;--ok:#3e5c76;--warn:#748cab;--bad:#0d1321;--b1:#2E8B57;--b2:#E0A800;--b3:#C0392B;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151d;--card:#1b2030;--text:#e8ebf3;--muted:#9aa3b8;--line:#2b3247;--acc:#8fb0ee;--accbg:#232c45;--ok:#5fcf93;--warn:#f0b940;--bad:#ff7b6b}}
-:root[data-theme="dark"]{--bg:#12151d;--card:#1b2030;--text:#e8ebf3;--muted:#9aa3b8;--line:#2b3247;--acc:#8fb0ee;--accbg:#232c45;--ok:#5fcf93;--warn:#f0b940;--bad:#ff7b6b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1321;--card:#1d2d44;--text:#f0ebd8;--muted:#A9B6C8;--line:#2C4058;--acc:#748cab;--accbg:#243650;--ok:#9FB4CC;--warn:#748cab;--bad:#f0ebd8;--b1:#5FCF93;--b2:#F0B940;--b3:#FF7B6B}}
+:root[data-theme="dark"]{--bg:#0d1321;--card:#1d2d44;--text:#f0ebd8;--muted:#A9B6C8;--line:#2C4058;--acc:#748cab;--accbg:#243650;--ok:#9FB4CC;--warn:#748cab;--bad:#f0ebd8;--b1:#5FCF93;--b2:#F0B940;--b3:#FF7B6B}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px}
+header{background:var(--card);border-bottom:4px solid var(--warn);padding:14px 16px}
 .wrap{max-width:900px;margin:0 auto;padding:0 16px}
 h1{font-size:1.25rem;margin:0}h2{font-size:1.05rem;margin:0 0 8px}
 .sub{color:var(--muted);font-size:.85rem;margin:2px 0 0}
@@ -71,7 +71,7 @@ const st={tab:"student",br:"CSE",chat:[],busy:false,cur:0,limited:false,consent:
 const avg=s=>Math.round(Object.values(s.t).reduce((a,b)=>a+b,0)/Object.keys(s.t).length);
 const weak=s=>Object.entries(s.t).sort((a,b)=>a[1]-b[1]);
 const risk=s=>avg(s)<55||weak(s)[0][1]<40;
-const col=v=>v>=70?"var(--ok)":v>=50?"var(--warn)":"var(--bad)";
+const col=v=>v>=70?"var(--b1)":v>=50?"var(--b2)":"var(--b3)";
 const $=id=>document.getElementById(id);
 const tabs=[["student","Student view"],["chat","AI assistant"],["faculty","Faculty view"],["privacy","Privacy & data"],["feedback","Feedback & rollout"]];
 function nav(){$("nav").innerHTML=tabs.map(([k,l])=>`<button class="${st.tab===k?"on":""}" onclick="go('${k}')">${l}</button>`).join("")+`<select aria-label="Branch" style="margin-left:auto" onchange="br(this.value)">${Object.keys(BR).map(b=>`<option ${b===st.br?"selected":""}>${b}</option>`).join("")}</select>`}
